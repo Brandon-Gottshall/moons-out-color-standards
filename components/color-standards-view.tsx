@@ -28,7 +28,9 @@ const THEME = {
     headerBg: "#0c0c0b",
     headerBorder: "#1e1d1b",
     toggleBg: "#1e1d1b",
-    copyHover: "#252320",
+    navActiveBg: "#252320",
+    tag: "#2a2926",
+    tagText: "#9a978f",
   },
   light: {
     bg: "#f7f6f3",
@@ -45,12 +47,23 @@ const THEME = {
     headerBg: "#ffffff",
     headerBorder: "#e8e6e1",
     toggleBg: "#eeece7",
-    copyHover: "#f0eeea",
+    navActiveBg: "#e8e6e1",
+    tag: "#e8e6e1",
+    tagText: "#5c5a53",
   },
 } as const;
 
 type Mode = keyof typeof THEME;
 type ThemeTokens = (typeof THEME)[Mode];
+
+// ─── Sections for anchor nav ────────────────────────────────────────────────
+
+const SECTIONS = [
+  { id: "groups", label: "Groups" },
+  { id: "chords", label: "Chords" },
+  { id: "context", label: "Context" },
+  { id: "rules", label: "Rules" },
+] as const;
 
 // ─── Utility: readable foreground for a hex bg ──────────────────────────────
 
@@ -69,7 +82,7 @@ function fgForBg(hex: string): string {
 
 // ─── Sub-components ─────────────────────────────────────────────────────────
 
-function CopyHex({ hex, theme }: { hex: string; theme: ThemeTokens }) {
+function CopyHex({ hex, theme, className }: { hex: string; theme: ThemeTokens; className?: string }) {
   const [copied, setCopied] = useState(false);
 
   const copy = useCallback(() => {
@@ -82,13 +95,39 @@ function CopyHex({ hex, theme }: { hex: string; theme: ThemeTokens }) {
   return (
     <button
       onClick={copy}
-      className="group flex items-center gap-1.5 rounded px-1.5 py-0.5 font-mono text-xs transition-colors"
+      className={`group inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 font-mono text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68549]/50 ${className ?? ""}`}
       style={{ color: theme.hex }}
       title={`Copy ${hex}`}
     >
       {hex}
-      <span className="opacity-0 transition-opacity group-hover:opacity-60" style={{ color: theme.muted }}>
+      <span className="opacity-30 transition-opacity group-hover:opacity-70" style={{ color: theme.muted }}>
         {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+      </span>
+    </button>
+  );
+}
+
+function CopyHexOverlay({ hex }: { hex: string }) {
+  const [copied, setCopied] = useState(false);
+  const fg = fgForBg(hex);
+
+  const copy = useCallback(() => {
+    navigator.clipboard.writeText(hex).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  }, [hex]);
+
+  return (
+    <button
+      onClick={copy}
+      className="group inline-flex items-center gap-1.5 rounded px-1.5 py-0.5 font-mono text-[11px] font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+      style={{ color: fg, backgroundColor: "rgba(0,0,0,0.18)" }}
+      title={`Copy ${hex}`}
+    >
+      {hex}
+      <span className="opacity-30 transition-opacity group-hover:opacity-80">
+        {copied ? <Check className="h-2.5 w-2.5" /> : <Copy className="h-2.5 w-2.5" />}
       </span>
     </button>
   );
@@ -107,7 +146,7 @@ function GradientBar({
   return <span className={className} style={{ background: `linear-gradient(${direction}, ${colors.join(", ")})` }} />;
 }
 
-// ─── Palette Group: large color blocks ──────────────────────────────────────
+// ─── Palette Group ──────────────────────────────────────────────────────────
 
 function PaletteGroup({
   name,
@@ -125,28 +164,21 @@ function PaletteGroup({
       className="overflow-hidden rounded-xl"
       style={{ backgroundColor: theme.cardBg, border: `1px solid ${theme.cardBorder}` }}
     >
-      {/* Group header */}
       <div className="flex items-center gap-3 px-5 py-3.5" style={{ borderBottom: `1px solid ${theme.divider}` }}>
         <GradientBar colors={gradientColors} horizontal={false} className="inline-block h-5 w-1.5 rounded-full" />
         <span className="text-sm font-semibold" style={{ color: theme.heading }}>{name}</span>
       </div>
 
-      {/* Color entries as big blocks */}
       <div className="grid grid-cols-2 gap-px sm:grid-cols-3 lg:grid-cols-4" style={{ backgroundColor: theme.divider }}>
         {entries.map((entry) => (
           <div key={entry.hex + entry.label} className="flex flex-col">
-            {/* Large color block */}
             <div className="h-20 w-full" style={{ backgroundColor: entry.hex }}>
               <div className="flex h-full items-end p-2.5">
-                <span className="rounded px-1.5 py-0.5 font-mono text-[11px] font-medium" style={{ color: fgForBg(entry.hex), backgroundColor: "rgba(0,0,0,0.15)" }}>
-                  {entry.hex}
-                </span>
+                <CopyHexOverlay hex={entry.hex} />
               </div>
             </div>
-            {/* Label + copy */}
-            <div className="flex items-center justify-between px-3 py-2.5" style={{ backgroundColor: theme.cardBg }}>
+            <div className="flex items-center justify-between gap-2 px-3 py-2.5" style={{ backgroundColor: theme.cardBg }}>
               <span className="text-xs leading-snug" style={{ color: theme.body }}>{entry.label}</span>
-              <CopyHex hex={entry.hex} theme={theme} />
             </div>
           </div>
         ))}
@@ -155,7 +187,7 @@ function PaletteGroup({
   );
 }
 
-// ─── Chord Chip ─────────────────────────────────────────────────────────────
+// ─── Chord Chip (larger, with hex codes) ────────────────────────────────────
 
 function ChordChip({
   label,
@@ -167,9 +199,16 @@ function ChordChip({
   theme: ThemeTokens;
 }) {
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      <GradientBar colors={colors} horizontal className="block h-10 w-24 rounded-lg" />
-      <span className="text-xs font-medium" style={{ color: theme.muted }}>{label}</span>
+    <div className="flex flex-col gap-2">
+      <GradientBar colors={colors} horizontal className="block h-12 w-full rounded-lg" />
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold" style={{ color: theme.heading }}>{label}</span>
+      </div>
+      <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+        {colors.map((c) => (
+          <span key={c} className="font-mono text-[10px]" style={{ color: theme.muted }}>{c}</span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -185,6 +224,8 @@ function DemoCard({
   buttonBg,
   buttonColor,
   buttonText,
+  groupTag,
+  theme,
 }: {
   title: string;
   description: string;
@@ -194,11 +235,21 @@ function DemoCard({
   buttonBg: string;
   buttonColor: string;
   buttonText: string;
+  groupTag: string;
+  theme: ThemeTokens;
 }) {
   return (
-    <div className="flex flex-col justify-between rounded-xl p-5" style={{ backgroundColor: bg, minHeight: 160 }}>
+    <div className="flex flex-col justify-between rounded-xl p-5" style={{ backgroundColor: bg, minHeight: 170 }}>
       <div>
-        <h4 className="mb-2 text-sm font-bold" style={{ color: headColor }}>{title}</h4>
+        <div className="mb-3 flex items-center justify-between">
+          <h4 className="text-sm font-bold" style={{ color: headColor }}>{title}</h4>
+          <span
+            className="rounded-full px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider"
+            style={{ backgroundColor: "rgba(0,0,0,0.15)", color: bodyColor, opacity: 0.7 }}
+          >
+            {groupTag}
+          </span>
+        </div>
         <p className="text-xs leading-relaxed" style={{ color: bodyColor, opacity: 0.85 }}>{description}</p>
       </div>
       <span
@@ -223,18 +274,18 @@ export function ColorStandardsView() {
 
       {/* ── Header ── */}
       <header
-        className="flex shrink-0 items-center justify-between px-6 py-3.5"
+        className="flex shrink-0 items-center justify-between px-6 py-3"
         style={{ backgroundColor: t.headerBg, borderBottom: `1px solid ${t.headerBorder}` }}
       >
         <div className="flex items-center gap-2.5">
           <GradientBar colors={LONG_CHORD_BAR} horizontal className="inline-block h-5 w-1 rounded-full" />
           <span className="text-sm font-bold tracking-wide" style={{ color: t.heading }}>MOONS OUT</span>
-          <span className="text-sm" style={{ color: t.muted }}>/ Color Standards</span>
+          <span className="hidden text-sm sm:inline" style={{ color: t.muted }}>/ Color Standards</span>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setMode(mode === "dark" ? "light" : "dark")}
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors"
+            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68549]/50"
             style={{ color: t.muted, backgroundColor: t.toggleBg }}
             aria-label={`Switch to ${mode === "dark" ? "light" : "dark"} mode`}
           >
@@ -243,7 +294,7 @@ export function ColorStandardsView() {
           <a
             href="/Moons_Out_Color_Standards.pdf"
             download="Moons_Out_Color_Standards.pdf"
-            className="flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors"
+            className="flex items-center gap-2 rounded-lg px-3.5 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68549]/50"
             style={{ backgroundColor: COLORS.forest, color: COLORS.cream }}
           >
             <Download className="h-3.5 w-3.5" />
@@ -252,11 +303,30 @@ export function ColorStandardsView() {
         </div>
       </header>
 
+      {/* ── Anchor Nav ── */}
+      <nav
+        className="flex shrink-0 items-center gap-1 px-6 py-2"
+        style={{ backgroundColor: t.headerBg, borderBottom: `1px solid ${t.headerBorder}` }}
+      >
+        {SECTIONS.map((s) => (
+          <a
+            key={s.id}
+            href={`#${s.id}`}
+            className="rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68549]/50"
+            style={{ color: t.muted }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = t.navActiveBg; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+          >
+            {s.label}
+          </a>
+        ))}
+      </nav>
+
       {/* ── Content ── */}
-      <div className="flex-1 overflow-y-auto" style={{ backgroundColor: t.bg }}>
+      <div className="flex-1 overflow-y-auto scroll-smooth" style={{ backgroundColor: t.bg }}>
         <div className="mx-auto max-w-4xl px-6 py-12 sm:px-10">
 
-          {/* ── Hero / Title ── */}
+          {/* ── Hero ── */}
           <section className="mb-14">
             <GradientBar colors={LONG_CHORD_BAR} horizontal className="mb-8 block h-1 w-20 rounded-full" />
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl" style={{ color: t.heading }}>
@@ -273,7 +343,7 @@ export function ColorStandardsView() {
           </section>
 
           {/* ── Palette Groups ── */}
-          <section className="mb-14">
+          <section id="groups" className="mb-14 scroll-mt-28">
             <h2 className="mb-2 text-lg font-bold" style={{ color: t.heading }}>Palette Groups</h2>
             <p className="mb-6 text-sm" style={{ color: t.muted }}>
               Five tonal contexts, each defining a surface and accent family. Click any hex to copy.
@@ -292,22 +362,27 @@ export function ColorStandardsView() {
           </section>
 
           {/* ── Palette Chords ── */}
-          <section className="mb-14">
+          <section id="chords" className="mb-14 scroll-mt-28">
             <h2 className="mb-2 text-lg font-bold" style={{ color: t.heading }}>Palette Chords</h2>
             <p className="mb-6 text-sm" style={{ color: t.muted }}>
               Curated gradient pairings that define the tonal character of each brand context.
               Each chord blends two to three anchors from the master palette.
             </p>
 
-            <div className="flex flex-wrap gap-5">
-              {CHORD_CHIPS.map((chip) => (
-                <ChordChip key={chip.label} label={chip.label} colors={chip.colors} theme={t} />
-              ))}
+            <div
+              className="overflow-hidden rounded-xl"
+              style={{ backgroundColor: t.cardBg, border: `1px solid ${t.cardBorder}` }}
+            >
+              <div className="grid grid-cols-2 gap-5 p-5 sm:grid-cols-3 lg:grid-cols-5">
+                {CHORD_CHIPS.map((chip) => (
+                  <ChordChip key={chip.label} label={chip.label} colors={chip.colors} theme={t} />
+                ))}
+              </div>
             </div>
 
             <div className="mt-8">
               <p className="mb-2 text-xs font-medium uppercase tracking-widest" style={{ color: t.muted }}>Master Gradient</p>
-              <GradientBar colors={LONG_CHORD_BAR} horizontal className="block h-8 w-full rounded-lg" />
+              <GradientBar colors={LONG_CHORD_BAR} horizontal className="block h-10 w-full rounded-lg" />
               <div className="mt-2 flex justify-between">
                 {LONG_CHORD_BAR.map((c) => (
                   <CopyHex key={c} hex={c} theme={t} />
@@ -317,7 +392,7 @@ export function ColorStandardsView() {
           </section>
 
           {/* ── In Context ── */}
-          <section className="mb-14">
+          <section id="context" className="mb-14 scroll-mt-28">
             <h2 className="mb-2 text-lg font-bold" style={{ color: t.heading }}>In Context</h2>
             <p className="mb-6 text-sm" style={{ color: t.muted }}>
               How each surface looks with real content. These represent the four primary
@@ -334,6 +409,8 @@ export function ColorStandardsView() {
                 buttonBg={COLORS.wine}
                 buttonColor={COLORS.cream}
                 buttonText="Watch Now"
+                groupTag="Baseline"
+                theme={t}
               />
               <DemoCard
                 title="Cinematic / Premium"
@@ -344,6 +421,8 @@ export function ColorStandardsView() {
                 buttonBg={COLORS.gold}
                 buttonColor={COLORS.forestDeep}
                 buttonText="Explore"
+                groupTag="High Contrast"
+                theme={t}
               />
               <DemoCard
                 title="CTA / Conversion"
@@ -354,6 +433,8 @@ export function ColorStandardsView() {
                 buttonBg={COLORS.gold}
                 buttonColor={COLORS.forestDeep}
                 buttonText="Get Started"
+                groupTag="CTA"
+                theme={t}
               />
               <DemoCard
                 title="Documentation"
@@ -364,12 +445,14 @@ export function ColorStandardsView() {
                 buttonBg={COLORS.forest}
                 buttonColor={COLORS.cream}
                 buttonText="Read Docs"
+                groupTag="Light Mode"
+                theme={t}
               />
             </div>
           </section>
 
           {/* ── Usage Rules ── */}
-          <section className="mb-14">
+          <section id="rules" className="mb-14 scroll-mt-28">
             <h2 className="mb-2 text-lg font-bold" style={{ color: t.heading }}>Usage Rules</h2>
             <p className="mb-6 text-sm" style={{ color: t.muted }}>
               Hard constraints on how the palette may be applied across surfaces.

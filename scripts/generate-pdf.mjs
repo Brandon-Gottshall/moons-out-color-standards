@@ -260,7 +260,7 @@ const doc = h(Document, { title: "Coloring Standards for Filmmakers", author: "M
   )
 );
 
-const outPath = process.argv[2] || "/Users/fleetadmin/Fleet-Chat/public/Moons_Out_Color_Standards.pdf";
+const outPath = process.argv[2] || new URL("../public/Moons_Out_Color_Standards.pdf", import.meta.url).pathname;
 const buffer = await renderToBuffer(doc);
 writeFileSync(outPath, buffer);
 console.log(`PDF generated: ${buffer.length} bytes -> ${outPath}`);
