@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Download, Moon, Sun, Check, Copy } from "lucide-react";
 import {
   COLORS,
@@ -204,9 +204,9 @@ function ChordChip({
       <div className="flex items-center justify-between">
         <span className="text-xs font-semibold" style={{ color: theme.heading }}>{label}</span>
       </div>
-      <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+      <div className="flex flex-wrap gap-x-1 gap-y-0.5">
         {colors.map((c) => (
-          <span key={c} className="font-mono text-[10px]" style={{ color: theme.muted }}>{c}</span>
+          <CopyHex key={c} hex={c} theme={theme} className="!text-[10px] !px-0.5 !py-0" />
         ))}
       </div>
     </div>
@@ -245,7 +245,7 @@ function DemoCard({
           <h4 className="text-sm font-bold" style={{ color: headColor }}>{title}</h4>
           <span
             className="rounded-full px-2 py-0.5 text-[9px] font-medium uppercase tracking-wider"
-            style={{ backgroundColor: "rgba(0,0,0,0.15)", color: bodyColor, opacity: 0.7 }}
+            style={{ backgroundColor: "rgba(0,0,0,0.12)", color: headColor, opacity: 0.75 }}
           >
             {groupTag}
           </span>
@@ -268,6 +268,17 @@ export function ColorStandardsView() {
   const [mode, setMode] = useState<Mode>("dark");
   const t = THEME[mode];
   const groupNames = Object.keys(GROUP_GRADIENTS);
+
+  // Sync browser chrome color with theme
+  useEffect(() => {
+    let meta = document.querySelector('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.setAttribute("name", "theme-color");
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute("content", t.headerBg);
+  }, [t.headerBg]);
 
   return (
     <div className="flex h-screen flex-col" style={{ backgroundColor: t.bg }}>
@@ -315,7 +326,9 @@ export function ColorStandardsView() {
             className="rounded-md px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A68549]/50"
             style={{ color: t.muted }}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = t.navActiveBg; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+            onMouseLeave={(e) => { if (!e.currentTarget.matches(":focus-visible")) e.currentTarget.style.backgroundColor = "transparent"; }}
+            onFocus={(e) => { e.currentTarget.style.backgroundColor = t.navActiveBg; }}
+            onBlur={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
           >
             {s.label}
           </a>
@@ -487,12 +500,17 @@ export function ColorStandardsView() {
           </section>
 
           {/* ── Footer ── */}
-          <footer className="flex items-center justify-between pt-4 pb-8" style={{ borderTop: `1px solid ${t.divider}` }}>
-            <div className="flex items-center gap-2.5">
-              <GradientBar colors={LONG_CHORD_BAR} horizontal className="inline-block h-4 w-1 rounded-full" />
-              <span className="text-xs font-bold tracking-wider" style={{ color: t.muted }}>MOONS OUT</span>
+          <footer className="pt-4 pb-8" style={{ borderTop: `1px solid ${t.divider}` }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <GradientBar colors={LONG_CHORD_BAR} horizontal className="inline-block h-4 w-1 rounded-full" />
+                <span className="text-xs font-bold tracking-wider" style={{ color: t.muted }}>MOONS OUT</span>
+              </div>
+              <span className="text-xs" style={{ color: t.faint }}>Color Standards v1.0 — March 2026</span>
             </div>
-            <span className="text-xs" style={{ color: t.faint }}>Color Standards v1.0 — March 2026</span>
+            <p className="mt-3 text-[10px] leading-relaxed" style={{ color: t.faint }}>
+              The downloadable PDF is a printable companion — layout may differ from this interactive reference.
+            </p>
           </footer>
 
         </div>
