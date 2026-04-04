@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AppShell } from "@/components/shell/app-shell";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,8 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Moons Out — Color Standards",
-  description: "Brand-consistent color palette reference for filmmakers",
+  title: "Fleet Ops Console",
+  description: "Unified workspace for fleet operations, planning, and coordination",
+  icons: { icon: "/fleet-ops-logo.svg" },
 };
 
 export default function RootLayout({
@@ -27,7 +29,9 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <AppShell>{children}</AppShell>
+      </body>
     </html>
   );
 }

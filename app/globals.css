@@ -1,26 +1,121 @@
 @import "tailwindcss";
 
+/* Fleet Ops Console — Unified Design Tokens */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Core palette — forest green heritage unified across all areas including Ops */
+  --background: oklch(0.18 0.04 155);
+  --foreground: oklch(0.92 0.02 90);
+
+  /* Surface layers */
+  --card: oklch(0.14 0.035 155);
+  --card-foreground: oklch(0.92 0.02 90);
+  --card-elevated: oklch(0.16 0.038 155);
+
+  /* Muted/secondary */
+  --muted: oklch(0.22 0.02 250);
+  --muted-foreground: oklch(0.55 0 0);
+
+  /* Accent — warm gold/tan that unifies across all workspace areas */
+  --accent: oklch(0.62 0.1 70);
+  --accent-foreground: oklch(0.18 0.04 155);
+  --accent-subtle: oklch(0.62 0.1 70 / 0.15);
+
+  /* Borders */
+  --border: oklch(0.62 0.1 70 / 0.25);
+  --border-subtle: oklch(1 0 0 / 0.08);
+
+  /* Semantic */
+  --success: oklch(0.72 0.17 155);
+  --warning: oklch(0.78 0.15 75);
+  --danger: oklch(0.55 0.2 15);
+  --info: oklch(0.7 0.14 230);
+
+  /* Context accents */
+  --context-personal: oklch(0.7 0.14 230);
+  --context-work: oklch(0.62 0.1 70);
+
+  /* Spacing rhythm */
+  --radius: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  /* Typography */
+  --font-heading: var(--font-geist-sans);
+  --font-body: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Sidebar */
+  --sidebar-width: 16rem;
+  --sidebar-collapsed-width: 3.5rem;
+
+  /* Header */
+  --header-height: 3rem;
+}
+
+/* Animations */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(0.5rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-elevated: var(--card-elevated);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent-subtle: var(--accent-subtle);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+  --color-context-personal: var(--context-personal);
+  --color-context-work: var(--context-work);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono);
+  --animate-fade-in: fade-in 0.2s ease-out;
+  --animate-slide-up: slide-up 0.25s ease-out;
+  --animate-slide-in-left: slide-in-left 0.2s ease-out;
+  --animate-scale-in: scale-in 0.15s ease-out;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Base */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--muted-foreground); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* Focus */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius);
 }
